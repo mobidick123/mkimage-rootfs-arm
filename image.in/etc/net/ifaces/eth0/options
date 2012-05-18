@@ -1,0 +1,20 @@
+# This file doesn't contain comments any more, refer to etcnet-options(5)
+# manpage for detailed options description.
+
+DISABLED=no
+BOOTPROTO=dhcp
+ONBOOT=yes
+USE_HOTPLUG=no
+USE_PCMCIA=no
+CONFIG_IPV4=yes
+CONFIG_IPV6=no
+CONFIG_IPX=no
+CONFIG_QOS=yes
+CONFIG_WIRELESS=no
+CONFIG_FW=no
+KEEP_DOWN=no
+DONT_FLUSH=no
+IFUP_CHILDREN=no
+IFUP_PARENTS=yes
+IFDOWN_CHILDREN=yes
+IFDOWN_PARENTS=no

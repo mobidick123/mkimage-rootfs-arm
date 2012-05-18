@@ -1,0 +1,6 @@
+# apt-get install qemu-user-binfmt_misc
+# modprobe binfmt_misc
+# echo ":arm:M::\x7fELF\x01\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x28\x00:\xff\xff\xff\xff\xff\xff\xff\x00\xff\xff\xff\xff\xff\xff\xff\xff\xfe\xff\xff\xff:/.host/qemu-arm:" > /proc/sys/fs/binfmt_misc/register
+# echo 32768 > /proc/sys/vm/mmap_min_addr
+$ "$EDITOR" sources.list
+$ make

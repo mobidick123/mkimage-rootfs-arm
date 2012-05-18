@@ -1,0 +1,136 @@
+#!/bin/sh -efu
+
+PATH=${TOOLSDIR%/}:$PATH
+. mki-sh-functions
+
+make_file_list() {
+	run_chrooted "$chroot" <<EOF
+#!/bin/sh -efu
+mkdir -p /.out
+cd /.image
+[ -f "/.out/$1" ] || find ./ | sort > "/.out/$1"
+EOF
+}
+
+make_rpm_list() {
+	run_chrooted "$chroot" <<EOF
+#!/bin/sh -efu
+mkdir -p /.out
+[ -f "/.out/$1" ] || rpm -qa --queryformat '%{NAME}\n' | sort > "/.out/$1"
+EOF
+}
+
+adjust() {
+	dir="${WORKDIR%/}"
+	chroot="${dir%/}/chroot"
+}
+
+install_installer() {
+	local installer=installer-common-stage2
+	local aux="/sbin/installkernel $2"
+	local ifeatures="$(echo "$1" | sed -e 's/[^[:space:]]\+/installer-feature-&/g')"
+	echo "Make the prior-to-install RPM list..." >&2
+	make_rpm_list rpm-list-pre
+	echo "Install the installer packages..." >&2
+	env -i PATH="$PATH" hsh-install -- "$dir" $installer $aux $ifeatures
+}
+
+uninstall_installer() {
+	echo "Make the post-install RPM list..." >&2
+	make_rpm_list rpm-list-post
+	run_chrooted "$chroot" <<EOF
+#!/bin/sh -efu
+echo "Uninstall the installer packages..." >&2
+pkgs="\$(join -j1 -v1 /.out/rpm-list-post /.out/rpm-list-pre | tr '\\n' ' ')"
+[ -z "\$pkgs" ] || rpmi -e -- \$pkgs
+rm -rf /.out
+EOF
+}
+
+prepare_chroot() {
+	run_chrooted "$chroot" <<EOF
+#!/bin/sh -efu
+cp /sbin/chroot /sbin/chroot~
+cat > /sbin/chroot <<EOF2
+#!/bin/sh -efu
+ret=0
+pushd "\\\$1" > /dev/null; shift
+cmd=
+for a in "\\\$@"; do
+	        cmd="\\\$cmd '\\\$a'"
+	done
+/bin/sh -c "\\\$cmd"; ret=\\\$?
+popd > /dev/null
+exit \\\$ret
+EOF2
+rm -f /mnt/destination
+ln -s / /mnt/destination
+sed -i -e 's/env[[:space:]]\+-i/#&/' /usr/sbin/install2-init-functions
+EOF
+}
+
+cleanup_chroot() {
+	run_chrooted "$chroot" <<EOF
+#!/bin/sh -efu
+rm -f /mnt/destination
+[ -f /sbin/chroot~ ] && mv /sbin/chroot~ /sbin/chroot
+sed -i -e 's/#env[[:space:]]\+-i/env -i/' /usr/sbin/install2-init-functions
+EOF
+}
+
+fix_scripts() {
+	run_chrooted "$chroot" <<EOF
+#!/bin/sh -eu
+cd /usr/share/install2
+for f in initinstall.d/* preinstall.d/* postinstall.d/*; do
+	sed -i -e "s/cp[[:space:]]\+\(-[0-9A-Za-z-]\+[[:space:]]\+\)*['\"]\?\(\/[^[:space:]'\"]\+\)\([^\/'\"]\+\)['\"]\?[[:space:]]\+\"\?\(\\\\\\\$destdir\2\3\?\)\"\?/\[ -f \"\\\\\\\$destdir\2\3\" ]/g" "\$f"
+done
+EOF
+}
+
+do_install() {
+	local MOUNTPOINTS="${INSTALLER_MOUNTPOINTS:-}"
+	export MOUNTPOINTS
+	run_chrooted "$chroot" <<EOF
+#!/bin/sh -eu
+DURING_INSTALL=1
+export DURING_INSTALL
+AUTOINSTALL=
+export AUTOINSTALL
+METHOD=disk
+export METHOD
+service alteratord start
+/usr/sbin/initinstall
+for f in /usr/share/install2/preinstall.d/* ; do
+	[ -f "\$f" -a -x "\$f" ] || continue
+	# Don't run backup scripts.
+	[ "\${f%\~}" = "\$f" ] || continue
+	echo "Run preinstall script \$f" >&2
+	"\$f"
+done
+echo "Yes, it is!" > /mnt/destination/_NEW_SYSTEM_
+rm -f /usr/share/install2/postinstall.d/00-remove-installer-pkgs.sh
+/usr/sbin/postinstall
+service alteratord stop
+EOF
+}
+
+echo "Make the prior-to-install file list..." >&2
+make_file_list file-list-pre
+WORKDIR="${WORKDIR%/}/chroot/.work"; adjust
+install_installer "$1" "$2"
+prepare_chroot
+fix_scripts
+do_install
+cleanup_chroot
+uninstall_installer
+WORKDIR="${WORKDIR%/chroot/.work}"; adjust
+echo "Make the post-install file list..." >&2
+make_file_list file-list-post
+
+diff -u "${chroot%/}/.out/file-list-pre" "${chroot%/}/.out/file-list-post" > "${outdir%/}/install.diff" || [ $? -eq 1 ]
+if [ -s "${outdir%/}/install.diff" ]; then
+	echo "The following files was add/removed to/from the image during install:" >&2
+	cat "${outdir%/}/install.diff" | grep '^[+-]\.'
+fi
+

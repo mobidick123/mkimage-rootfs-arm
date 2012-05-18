@@ -1,0 +1,124 @@
+## Kernel
+#kernel-image-sheeva
+#kernel-image-dreamplug
+#firmware-linux
+
+## system
+usb-modeswitch
+
+## boot
+#sysvinit
+systemd
+ubifsprogs
+mtd
+udev
+udev-rule-generator
+
+## interactivesystem
+#sudo
+#etcnet-defaults-server
+# [no X11] xauth
+#man-pages
+mingetty
+agetty
+#gpm
+vim-console
+#passwd
+#minicom
+
+## network tools
+etcnet
+ifplugd
+arpwatch
+dhcpcd
+bind
+avahi-daemon
+avahi-tools
+wireless-tools
+uaputl
+bridge-utils
+openresolv-bind
+apt-rsync
+
+## disk tools
+fdisk
+e2fsprogs
+#iotop
+#quota
+#osec
+#osec-cronjob
+#osec-mailreport
+usbutils
+
+## clients
+nfs-clients
+openssh-clients
+wget
+rsync
+
+## alterator
+# alterator-fbi
+# alterator-firsttime
+#alterator-distro-chainmail
+# alterator-datetime
+
+#alterator-bacula
+# bacula-director-sqlite3
+
+#alterator-bind
+#alterator-dhcp
+# alterator-kdc
+# alterator-ldap-groups
+# alterator-ldap-users
+#alterator-net-iptables
+# alterator-net-domain
+# alterator-net-eth
+#alterator-net-pptp
+#alterator-net-openvpn
+#alterator-openvpn-server
+#alterator-squid
+# [waiting for Gambit 4.6.0] alterator-squidmill
+#alterator-quota
+#alterator-vsftpd
+#alterator-xinetd
+#alterator-postfix-dovecot
+#alterator-ulogd
+#alterator-hotstandby
+#alterator-snort
+# [no DrWeb] alterator-drweb
+# [no ClamAV] alterator-clamav
+#alterator-pkg
+#alterator-updates
+#alterator-net-routing
+
+# [no gfxboot] publish-acc-to-console
+
+## servers
+openssh-server
+#openssh-blacklist
+#dovecot
+#postfix-dovecot
+#nfs-server
+#apache2
+#apache2-mod_ssl
+samba
+#rsync-server
+
+##Anti-virus
+# [no DrWeb] drweb-postfix
+# [no ClamAV] clamav
+# [no ClamAV] clamsmtp
+
+## debug
+#strace
+#tcpdump
+
+##CryptoCom support
+# [no CryptoCOM] cryptopack-openssl
+# [no CryptoCOM] cryptopack-open-engine
+# [no CryptoCOM] openvpn-cryptocom
+
+## Monitoring
+# [no IVK] ivk-repo
+# [no Zabbix] zabbix-agent
+# [no Zabbix] alterator-zabbix-agent

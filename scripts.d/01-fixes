@@ -1,0 +1,20 @@
+#!/bin/sh -efu
+echo fixing root password
+usermod  -p '' root
+
+echo create a scriptlet to create the serial port ttyS0 device
+cat - >>/etc/rc.d/rc.sysinit <<EOF
+
+# Create the serial port ttyS0 device if it doesn't exist
+if ! [ -c /dev/ttyS0 ]; then
+	mknod /dev/ttyS0 c 4 64
+	chgrp uucp /dev/ttyS0
+	chmod 0660 /dev/ttyS0
+fi
+EOF
+
+echo fixing securetty
+echo ttyS0 >> /etc/securetty
+
+echo fixing inititab
+sed -i -e 's/^\([0-9]:[0-9]\+:respawn:\).\+[[:space:]]\+tty1[[:space:]]*$/\1\/sbin\/agetty 115200 ttyS0/' /etc/inittab

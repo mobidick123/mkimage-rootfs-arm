@@ -1,0 +1,15 @@
+#!/bin/sh -efu
+
+PATH=${TOOLSDIR%/}:$PATH
+. mki-sh-functions
+
+fix_mode() {
+	run_chrooted "$chroot" <<EOF
+#!/bin/sh -efu
+chmod "$1" "$2"
+EOF
+}
+
+echo "Fix root directory mode" >&2
+fix_mode 0755 /.work/chroot
+
